@@ -1,310 +1,246 @@
-# TabPFN
+# KG-TabPFN: Injecting Knowledge-Graph Priors into a Frozen Tabular Foundation Model
 
-[![PyPI version](https://badge.fury.io/py/tabpfn.svg)](https://badge.fury.io/py/tabpfn)
-[![Downloads](https://pepy.tech/badge/tabpfn)](https://pepy.tech/project/tabpfn)
-[![Discord](https://img.shields.io/discord/1285598202732482621?color=7289da&label=Discord&logo=discord&logoColor=ffffff)](https://discord.gg/BHnX2Ptf4j)
-[![Documentation](https://img.shields.io/badge/docs-priorlabs.ai-blue)](https://priorlabs.ai/docs)
-[![colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/PriorLabs/TabPFN/blob/main/examples/notebooks/TabPFN_Demo_Local.ipynb)
-[![Python Versions](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)](https://pypi.org/project/tabpfn/)
+This repository is a research project exploring how **external knowledge graphs (KGs)** can be
+injected into the in-context inference of a **frozen** [TabPFN](https://github.com/PriorLabs/TabPFN)
+— a tabular foundation model that performs supervised learning in a single forward pass.
 
-<img src="https://github.com/PriorLabs/tabpfn-extensions/blob/main/tabpfn_summary.webp" width="80%" alt="TabPFN Summary">
+The motivating setting is small-sample tabular prediction (e.g. biomedical data: few patients,
+many features), where a domain KG carries structure that the model cannot estimate from the
+data alone: which features are related, which pairs interact, and which features are known to
+be relevant to the target. The question this project asks is:
 
-## Quick Start
+> **Where and how should a column-level KG prior enter a frozen tabular transformer, so that a
+> good KG helps, and a wrong or empty KG provably does nothing?**
 
-### Interactive Notebook Tutorial
-> [!TIP]
->
-> Dive right in with our interactive Colab notebook! It's the best way to get a hands-on feel for TabPFN, walking you through installation, classification, and regression examples.
->
-> [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/PriorLabs/TabPFN/blob/main/examples/notebooks/TabPFN_Demo_Local.ipynb)
+The main method is **KGAM** (Knowledge-Graph Attention Mixture, `my_kg_experiments/kg_e_kgam.py`),
+supported by three earlier injection variants (Methods A/B/C) that map out the design space.
 
-> ⚡ **GPU Recommended**:
-> For optimal performance, use a GPU (even older ones with ~8GB VRAM work well; 16GB needed for some large datasets).
-> On CPU, only small datasets (≲1000 samples) are feasible.
-> No GPU? Use our free hosted inference via [TabPFN Client](https://github.com/PriorLabs/tabpfn-client).
+All methods share two design principles:
 
-### Installation
-Official installation (pip)
-```bash
-pip install tabpfn
-```
-OR installation from source
-```bash
-pip install "tabpfn @ git+https://github.com/PriorLabs/TabPFN.git"
-```
-OR local development installation: First [install uv](https://docs.astral.sh/uv/getting-started/installation) (version 0.10.0 or higher recommended), which we use for development, then run
-```bash
-git clone https://github.com/PriorLabs/TabPFN.git --depth 1
-cd TabPFN
-uv sync
-```
+1. **Safety / no-op guarantee** — every method has a gate (a scalar, a vector, or a zero-init
+   adapter) such that at gate = 0 the forward pass is **bit-exact vanilla TabPFN**. Training the
+   gates can therefore only help or stay neutral.
+2. **Lightness** — the transformer is never updated. Only a handful of scalar gates (KGAM: ~100
+   parameters) are trained through the frozen forward pass against the in-context NLL.
 
-### Basic Usage
-
-To use our default TabPFN-2.6 model, trained purely on synthetic data:
-
-```python
-from tabpfn import TabPFNClassifier, TabPFNRegressor
-
-clf = TabPFNClassifier()
-clf.fit(X_train, y_train)  # downloads checkpoint on first use
-predictions = clf.predict(X_test)
-
-reg = TabPFNRegressor()
-reg.fit(X_train, y_train)  # downloads checkpoint on first use
-predictions = reg.predict(X_test)
-```
-
-To use other model versions (e.g. TabPFN-2.5):
-
-```python
-from tabpfn import TabPFNClassifier, TabPFNRegressor
-from tabpfn.constants import ModelVersion
-
-classifier = TabPFNClassifier.create_default_for_version(ModelVersion.V2_5)
-regressor = TabPFNRegressor.create_default_for_version(ModelVersion.V2_5)
-```
-
-For complete examples, see the [tabpfn_for_binary_classification.py](https://github.com/PriorLabs/TabPFN/tree/main/examples/tabpfn_for_binary_classification.py), [tabpfn_for_multiclass_classification.py](https://github.com/PriorLabs/TabPFN/tree/main/examples/tabpfn_for_multiclass_classification.py), and [tabpfn_for_regression.py](https://github.com/PriorLabs/TabPFN/tree/main/examples/tabpfn_for_regression.py) files.
-
-
-### Usage Tips
-
-- **Use batch prediction mode**: Each `predict` call recomputes the training set. Calling `predict` on 100 samples separately is almost 100 times slower and more expensive than a single call. If the test set is very large, split it into chunks of 1000 samples each.
-- **Avoid data preprocessing**: Do not apply data scaling or one-hot encoding when feeding data to the model.
-- **Use a GPU**: TabPFN is slow to execute on a CPU. Ensure a GPU is available for better performance.
-- **Mind the dataset size**: TabPFN works best on datasets with fewer than 100,000 samples and 2000 features. For larger datasets, we recommend looking at the [Large datasets guide](https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/large_datasets/large_datasets_example.py).
-
-## TabPFN Ecosystem
-
-Choose the right TabPFN implementation for your needs:
-
-- **[TabPFN Client](https://github.com/priorlabs/tabpfn-client)**
-  Simple API client for using TabPFN via cloud-based inference.
-
-- **[TabPFN Extensions](https://github.com/priorlabs/tabpfn-extensions)**
-  A powerful companion repository packed with advanced utilities, integrations, and features - great place to contribute:
-
-  -  **`interpretability`**: Gain insights with SHAP-based explanations, feature importance, and selection tools.
-  -  **`unsupervised`**: Tools for outlier detection and synthetic tabular data generation.
-  -  **`embeddings`**: Extract and use TabPFN’s internal learned embeddings for downstream tasks or analysis.
-  -  **`many_class`**: Handle multi-class classification problems that exceed TabPFN's built-in class limit.
-  -  **`rf_pfn`**: Combine TabPFN with traditional models like Random Forests for hybrid approaches.
-  -  **`hpo`**: Automated hyperparameter optimization tailored to TabPFN.
-  -  **`post_hoc_ensembles`**: Boost performance by ensembling multiple TabPFN models post-training.
-
-  To install:
-  ```bash
-  git clone https://github.com/priorlabs/tabpfn-extensions.git
-  pip install -e tabpfn-extensions
-  ```
-
-- **[TabPFN (this repo)](https://github.com/priorlabs/tabpfn)**
-  Core implementation for fast and local inference with PyTorch and CUDA support.
-
-- **[TabPFN UX](https://ux.priorlabs.ai)**
-  No-code graphical interface to explore TabPFN capabilities—ideal for business users and prototyping.
-
-## TabPFN Workflow at a Glance
-Follow this decision tree to build your model and choose the right extensions from our ecosystem. It walks you through critical questions about your data, hardware, and performance needs, guiding you to the best solution for your specific use case.
-
-```mermaid
 ---
-config:
-  theme: 'default'
-  themeVariables:
-    edgeLabelBackground: 'white'
+
+## Main method: KGAM — a coverage-gated attention mixture
+
+### Background: feature-token attention in TabPFN
+
+TabPFN encodes every table row as a sequence of $C = G+1$ tokens: the $d$ feature columns are
+packed, in their current column order, into $G = \lceil d/p \rceil$ feature tokens of $p$
+consecutive columns each ($p=3$ in the released checkpoint), plus one **target token** that
+carries the label for context rows and a placeholder for query rows. Each transformer block
+attends along two axes; KGAM modifies only the **feature axis** (attention among the $C$ tokens
+of one row), which is where feature–feature dependence is computed.
+
+Two facts drive the design. First, raw attention logits carry no canonical scale — only the
+softmaxed distribution $P$ is normalized — so the prior is expressed **as a distribution** and
+combined with $P$, rather than added to the logits. Second, the prediction is read out from the
+target token, which gives feature–label prior knowledge a natural injection route.
+
+### KG interface: two channels per relation
+
+The prior is a multi-relation graph over the feature columns and the target. A coverage
+indicator $o_j \in \{0,1\}$ records whether column $j$ is mapped to a KG entity at all. Each
+relation $r = 1,\dots,R$ supplies:
+
+- **Feature–feature edges** $A^{(r)} \in \mathbb{R}^{d\times d}_{\ge 0}$ — e.g. similarity /
+  association relations (co-expression, shared pathway) or interaction relations (epistasis,
+  synthetic lethality, drug synergy). Mixed **bidirectionally** into token–token attention.
+- **Feature–label relevance** $b^{(r)} \in \mathbb{R}^{d}_{\ge 0}$ — e.g. known gene–phenotype
+  associations. Mixed **unidirectionally** into the target-token readout row only; the reverse
+  direction (feature tokens attending to the target) is deliberately never touched, because on
+  query rows the target token is an uninformative placeholder and on context rows it would open
+  a label-leak shortcut that inflates context fit without generalizing.
+
+### From KG to token-level priors: alignment, pooling, coverage
+
+Because TabPFN packs $p$ consecutive columns into one token, the pooled prior is sharp only if
+KG-related columns are adjacent. KGAM therefore clusters the **observed KG** into communities
+(union-find over feature–feature edges, with label-relevance edges attached to a virtual target
+node), and orders columns community-contiguously before tokenization — using only the KG, so no
+label leakage.
+
+Each relation's $d\times d$ prior is pooled to token resolution $G\times G$ by a **masked mean
+over covered pairs** (or a masked **max** for edge-sparse interaction relations, where a single
+strong edge would otherwise be diluted by up to $1/p^2$):
+
+$$M^{(r)}_{ab} = \frac{\sum_{j\in S_a}\sum_{k\in S_b} o_j\, o_k\, A^{(r)}_{jk}}{\max\left(1,\ \sum_{j\in S_a}\sum_{k\in S_b} o_j\, o_k\right)}, \qquad M^{(r)}_{aa} = 0,$$
+
+where $S_a$ is the set of columns packed into token $a$. "How much we know" is tracked
+separately as per-token **coverage** $c_a = \frac{1}{|S_a|}\sum_{j\in S_a} o_j \in [0,1]$, which
+gates the injection strength row-wise, so that missing KG information automatically shrinks the
+prior's share toward zero.
+
+### Prior normalization
+
+The pooled prior must be row-stochastic like $P$. Rows are normalized by a **masked row-softmax
+over the support only**, with one learnable temperature $\tau_r$ per relation; rows with empty
+support are switched off entirely via a support switch $s^{(r)}_a$. This guarantees
+*"no KG information ⇒ no intervention"* — a naive softmax would map an all-zero row to the
+uniform distribution, injecting maximal-entropy noise exactly where the KG is silent.
+
+### Injection: a gated convex mixture
+
+In every block $\ell$ and every feature-axis head (gates shared across heads), the attention
+distribution is replaced by a convex combination. For feature-token rows $a$:
+
+$$P'_{a\cdot} = \Bigl(1 - \sum_r \lambda^{(\ell)}_r\, c_a\, s^{(r)}_a\Bigr) P_{a\cdot} + \sum_{r=1}^{R} \lambda^{(\ell)}_r\, c_a\, s^{(r)}_a\; M'^{(r)}_{a\cdot},$$
+
+and analogously for the target readout row with its own gates $\lambda^{(\ell)}_{y,r}$ and the
+normalized label prior $m'^{(r)}$. The head output is $P'V$ as usual.
+
+Gates are zero-initialized and projected after every optimizer step onto
+$\{\lambda \ge 0,\ \sum_r \lambda_r \le 1\}$, so every row of $P'$ remains a probability
+distribution, and **all gates zero ⇒ $P' = P$ ⇒ exactly vanilla TabPFN**. With $L = 24$ blocks
+and $R$ relations the trainable set is $24\cdot 2R + 2R$ scalars (e.g. $R=2$: 100 parameters).
+
+### Training and KG-aware ensembling
+
+Only gates and temperatures are trained, against the **in-context NLL through the frozen
+forward**: each episode resamples a fresh context/query split *and* a fresh
+community-preserving column permutation, so the gradient reflects generalizable structure. An
+$\ell_1$ penalty biases the solution back toward the vanilla model (sharpening the safety
+property); an optional total-variation penalty encourages a contiguous band of active blocks in
+depth.
+
+At inference, TabPFN's ensemble over random column permutations would scatter KG-related
+columns across tokens and wash the pooled prior out toward uniform. KGAM replaces the
+permutation sampler with **community-preserving permutations** (random order of community
+blocks × random order within each block): every member still sees a different column layout,
+but tokens stay KG-coherent and every member's pooled prior keeps its block structure. Gates
+are shared across members, licensed by the construction's permutation-equivariance.
+
+### Variant: one feature per token (fpg = 1, exact injection)
+
+The community clustering, pooling, and permutation machinery above all exist to cope with
+TabPFN packing $p=3$ columns into one token. We also implemented the alternative that removes
+the problem at its root: **force one column per token** by patching the encoder's feature
+grouping so that each column is presented as the $[x, 0, 0]$ padding pattern — exactly the
+layout the checkpoint already saw during pretraining for tables whose width is not a multiple
+of $p$, so the encoder weights stay in-distribution and no retraining is needed.
+
+With token ≡ column, the pooling step becomes the **identity**: the $d\times d$ / $d$-dim prior
+is injected *exactly*, coverage reduces to $c_a = o_j \in \{0,1\}$, and no community clustering
+or community-preserving permutation is required — these arms run under plain uniform
+permutations end to end. Comparing (ours − base) at $p=3$ against (ours − base) at fpg = 1
+separates "KG value at token resolution" from "KG value at column resolution", and
+(base at fpg = 1 − base at $p=3$) prices the tokenization itself.
+
+The trade-off we found: fpg = 1 is essentially free on linear / additive-nonlinear / real data,
+but *hurts* on interaction-style signal — the in-token encoder mixing of the $p=3$ layout does
+real computational work for feature interactions, which single-column tokens give up. So exact
+injection is not a free lunch; whether it pays depends on whether the task's signal lives
+between columns or within a token.
+
+### Overhead
+
+The mixture acts on attention probabilities, so patched heads compute the $C\times C$ feature
+attention explicitly: extra memory $O(BHC^2)$ per block with $C = \lceil d/p \rceil + 1$
+(e.g. $d=120 \Rightarrow C = 41$) — negligible next to the $O(n^2)$ sample-axis attention. All
+KG processing (clustering, pooling, normalization) happens once at preprocessing time.
+
 ---
-graph LR
-    %% 1. DEFINE COLOR SCHEME & STYLES
-    classDef default fill:#fff,stroke:#333,stroke-width:2px,color:#333;
-    classDef start_node fill:#e8f5e9,stroke:#43a047,stroke-width:2px,color:#333;
-    classDef process_node fill:#e0f2f1,stroke:#00796b,stroke-width:2px,color:#333;
-    classDef decision_node fill:#fff8e1,stroke:#ffa000,stroke-width:2px,color:#333;
 
-    style Infrastructure fill:#fff,stroke:#ccc,stroke-width:5px;
-    style Unsupervised fill:#fff,stroke:#ccc,stroke-width:5px;
-    style Data fill:#fff,stroke:#ccc,stroke-width:5px;
-    style Performance fill:#fff,stroke:#ccc,stroke-width:5px;
-    style Interpretability fill:#fff,stroke:#ccc,stroke-width:5px;
+## Repository layout
 
-    %% 2. DEFINE GRAPH STRUCTURE
-    subgraph Infrastructure
-        start((Start)) --> gpu_check["GPU available?"];
-        gpu_check -- Yes --> local_version["Use TabPFN<br/>(local PyTorch)"];
-        gpu_check -- No --> api_client["Use TabPFN-Client<br/>(cloud API)"];
-        task_type["What is<br/>your task?"]
-    end
+All project code lives in `my_kg_experiments/`; the rest of the repo is the upstream TabPFN
+codebase it runs against.
 
-    local_version --> task_type
-    api_client --> task_type
+| File | Method | Injection surface | Trainable |
+|---|---|---|---|
+| `kg_e_kgam.py` | **KGAM (main)** — coverage-gated attention mixture | feature-axis attention **distributions**, per block | per-block per-relation gates $\lambda, \lambda_y$ + temperatures $\tau$ (~100 scalars) |
+| `kg_a_kgfp.py` | KGFP — KG feature propagation | **data space**: smooth rows along the feature graph ($X' = X\hat{A}$, APPNP), augment $[X \,\|\, X']$ | none (training-free) |
+| `kg_b_kgab_train_version2.py` | KGAB — additive attention bias | feature-attention **logits**: $u + \alpha M$, with per-layer gates and a diagnostic single-layer scan | per-layer $\alpha$ (zero-init), trained through the frozen forward |
+| `kg_c_kgce.py` | KGCE — column-token embedding addition | **token space**: add an aligned KG node embedding $g_\phi(z_j)$ to each column token | small zero-init adapter MLP $g_\phi$ |
 
-    end_node((Workflow<br/>Complete));
+Methods A/B/C are staged probes of the injection surface (data space → logits → token space);
+KGAM subsumes their lessons: distributions instead of unscaled logits, coverage/support gating
+instead of a single global strength, and a tokenization-aware ensemble instead of hoping the
+prior survives column shuffling.
 
-    subgraph Unsupervised
-        unsupervised_type["Select<br/>Unsupervised Task"];
-        unsupervised_type --> imputation["Imputation"]
-        unsupervised_type --> data_gen["Data<br/>Generation"];
-        unsupervised_type --> tabebm["Data<br/>Augmentation"];
-        unsupervised_type --> density["Outlier<br/>Detection"];
-        unsupervised_type --> embedding["Get<br/>Embeddings"];
-    end
+### Simulation & evaluation protocol (shared across methods)
 
+Each script is self-contained: it generates synthetic tables from a structural causal model in
+which the KG is the ground-truth column structure, then evaluates the frozen TabPFN with and
+without the injected prior. Scenarios include:
 
-    subgraph Data
-        data_check["Data Checks"];
-        model_choice["Samples > 50k or<br/>Classes > 10?"];
-        data_check -- "Table Contains Text Data?" --> api_backend_note["Note: API client has<br/>native text support"];
-        api_backend_note --> model_choice;
-        data_check -- "Time-Series Data?" --> ts_features["Use Time-Series<br/>Features"];
-        ts_features --> model_choice;
-        data_check -- "Purely Tabular" --> model_choice;
-        model_choice -- "No" --> finetune_check;
-        model_choice -- "Yes, 50k-100k samples" --> ignore_limits["Set<br/>ignore_pretraining_limits=True"];
-        model_choice -- "Yes, >100k samples" --> subsample["Large Datasets Guide<br/>"];
-        model_choice -- "Yes, >10 classes" --> many_class["Many-Class<br/>Method"];
-    end
+- **Label-relevance DGP** — sparse relevant columns at random positions, nonlinear additive
+  responses, heterogeneous weights; the KG knows only a subset of the relevant columns
+  (partial coverage), optionally with false edges (robustness knob).
+- **Mixed DGP** — three relation types at once: correlated pairs (denoising value), interaction
+  pairs whose pairing is *invisible to data correlations* (genuinely non-data information), and
+  label relevance; each channel observed only at a fraction `kg_frac`.
+- **Graded KG quality** — edges rewired at fractions 0→1, quality measured as the Frobenius
+  cosine between observed and true propagation operators.
 
-    subgraph Performance
-        finetune_check["Need<br/>Finetuning?"];
-        performance_check["Need Even Better Performance?"];
-        speed_check["Need faster inference<br/>at prediction time?"];
-        kv_cache["Enable KV Cache<br/>(fit_mode='fit_with_cache')<br/><small>Faster predict; +Memory ~O(N×F)</small>"];
-        tuning_complete["Tuning Complete"];
+Every run reports honesty controls alongside the method:
 
-        finetune_check -- Yes --> finetuning["Finetuning"];
-        finetune_check -- No --> performance_check;
+- `base` — the same pipeline with the KG switched off (holds everything but the KG fixed);
+- `ours0` — community-preserving permutations with gates at zero (isolates the permutation
+  sampler; also verifies the safety property empirically);
+- **random / permuted KG** — an Erdős–Rényi graph of matched density, and the true graph with
+  shuffled node labels: a correct method must fall back to ≈ base on both;
+- `oracle` — TabPFN on the true relevant columns (upper reference).
 
-        finetuning --> performance_check;
+Each condition additionally runs the fpg = 1 arms (`base_fpg1` / `vanilla_fpg1` / `ours_fpg1`,
+see the single-column-token variant above), so every table reads out both the token-resolution
+and the exact column-resolution value of the KG.
 
-        performance_check -- No --> tuning_complete;
-        performance_check -- Yes --> hpo["HPO"];
-        performance_check -- Yes --> post_hoc["Post-Hoc<br/>Ensembling"];
-        performance_check -- Yes --> more_estimators["More<br/>Estimators"];
-        performance_check -- Yes --> speed_check;
+### Key empirical observations
 
-        speed_check -- Yes --> kv_cache;
-        speed_check -- No --> tuning_complete;
+- When the KG carries information the data cannot reveal at small $n$ (partial label relevance,
+  interaction pairings orthogonal to the feature covariance), the trained mixture recovers a
+  large fraction of the base→oracle gap, and the gain decays as $n$ grows — consistent with the
+  prior-conditioning interpretation (TabPFN as an amortized posterior, the KG as extra prior
+  evidence).
+- Under random or permuted KGs, and with gates at zero, all methods fall back to base — the
+  no-op guarantee holds both by construction and empirically.
+- The injection surface matters: data-space smoothing (A) wins when the KG encodes redundancy /
+  similarity (recoverable from covariance in principle); attention-level injection (B/E) is
+  required when the KG encodes interactions invisible to correlations.
 
-        hpo --> tuning_complete;
-        post_hoc --> tuning_complete;
-        more_estimators --> tuning_complete;
-        kv_cache --> tuning_complete;
-    end
+## Running
 
-    subgraph Interpretability
+Requires the TabPFN package in this repo (see `pyproject.toml`; a v2.6-family checkpoint is
+downloaded on first use). Each experiment script runs standalone, e.g.:
 
-        tuning_complete --> interpretability_check;
+```bash
+# Main method: gated attention mixture, label-relevance DGP with partial KG coverage
+python my_kg_experiments/kg_e_kgam.py
 
-        interpretability_check["Need<br/>Interpretability?"];
+# Training-free feature propagation with KG-quality and n-sweeps
+python my_kg_experiments/kg_a_kgfp.py --experiment both
 
-        interpretability_check --> feature_selection["Feature Selection"];
-        interpretability_check --> partial_dependence["Partial Dependence Plots"];
-        interpretability_check --> shapley["Explain with<br/>SHAP"];
-        interpretability_check --> shap_iq["Explain with<br/>SHAP IQ"];
-        interpretability_check -- No --> end_node;
+# Attention-bias method: per-layer scan + trained per-layer gates
+python my_kg_experiments/kg_b_kgab_train_version2.py --mode both --family interaction
 
-        feature_selection --> end_node;
-        partial_dependence --> end_node;
-        shapley --> end_node;
-        shap_iq --> end_node;
-
-    end
-
-    %% 3. LINK SUBGRAPHS AND PATHS
-    task_type -- "Classification or Regression" --> data_check;
-    task_type -- "Unsupervised" --> unsupervised_type;
-
-    subsample --> finetune_check;
-    ignore_limits --> finetune_check;
-    many_class --> finetune_check;
-
-    %% 4. APPLY STYLES
-    class start,end_node start_node;
-    class local_version,api_client,imputation,data_gen,tabebm,density,embedding,api_backend_note,ts_features,subsample,ignore_limits,many_class,finetuning,feature_selection,partial_dependence,shapley,shap_iq,hpo,post_hoc,more_estimators,kv_cache process_node;
-    class gpu_check,task_type,unsupervised_type,data_check,model_choice,finetune_check,interpretability_check,performance_check,speed_check decision_node;
-    class tuning_complete process_node;
-
-    %% 5. ADD CLICKABLE LINKS (INCLUDING KV CACHE EXAMPLE)
-    click local_version "https://github.com/PriorLabs/TabPFN" "TabPFN Backend Options"
-    click api_client "https://github.com/PriorLabs/tabpfn-client" "TabPFN API Client"
-    click api_backend_note "https://github.com/PriorLabs/tabpfn-client" "TabPFN API Backend"
-    click unsupervised_type "https://github.com/PriorLabs/tabpfn-extensions" "TabPFN Extensions"
-    click imputation "https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/unsupervised/imputation.py" "TabPFN Imputation Example"
-    click data_gen "https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/unsupervised/generate_data.py" "TabPFN Data Generation Example"
-    click tabebm "https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/tabebm/tabebm_augment_real_world_data.ipynb" "TabEBM Data Augmentation Example"
-    click density "https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/unsupervised/density_estimation_outlier_detection.py" "TabPFN Density Estimation/Outlier Detection Example"
-    click embedding "https://github.com/PriorLabs/tabpfn-extensions/tree/main/examples/embedding" "TabPFN Embedding Example"
-    click ts_features "https://github.com/PriorLabs/tabpfn-time-series" "TabPFN Time-Series Example"
-    click many_class "https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/many_class/many_class_classifier_example.py" "Many Class Example"
-    click finetuning "https://github.com/PriorLabs/TabPFN/blob/main/examples/finetune_classifier.py" "Finetuning Example"
-    click feature_selection "https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/interpretability/feature_selection.py" "Feature Selection Example"
-    click partial_dependence "https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/interpretability/pdp_example.py" "Partial Dependence Plots Example"
-    click shapley "https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/interpretability/shap_example.py" "Shapley Values Example"
-    click shap_iq "https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/interpretability/shapiq_example.py" "SHAP IQ Example"
-    click post_hoc "https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/phe/phe_example.py" "Post-Hoc Ensemble Example"
-    click hpo "https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/hpo/tuned_tabpfn.py" "HPO Example"
-    click subsample "https://github.com/PriorLabs/tabpfn-extensions/blob/main/examples/large_datasets/large_datasets_example.py" "Large Datasets Example"
-    click kv_cache "https://github.com/PriorLabs/TabPFN/blob/main/examples/kv_cache_fast_prediction.py" "KV Cache Fast Prediction Example"
-
+# Column-token embedding addition
+python my_kg_experiments/kg_c_kgce.py --experiment quality
 ```
 
-## License
+Each script prints per-condition accuracies and saves comparison plots (`*.png`) covering the
+method, baselines, controls, and the oracle.
 
-The TabPFN-2.5 and TabPFN-2.6 model weights are licensed under a [non-commercial license](https://huggingface.co/Prior-Labs/tabpfn_2_6/blob/main/LICENSE). These are used by default.
+**Note.** The KG-injection code patches the model *in place* (monkey-patching
+`AlongRowAttention.forward` / `TabPFNBlock.forward` in `tabpfn.architectures.tabpfn_v2_6`)
+rather than forking the architecture, so it targets the v2.6 checkpoint family and is pinned to
+this repo's TabPFN version.
 
-The code and TabPFN-2 model weights are licensed under Prior Labs License (Apache 2.0 with additional attribution requirement): [here](LICENSE). To use the v2 model weights, instantiate your model as follows:
+## Status
 
-```
-from tabpfn.constants import ModelVersion
+Research prototype (synthetic-data validation stage; not under active development). The method
+document behind KGAM is in `wileyNJD-Doc.tex`.
 
-tabpfn_v2 = TabPFNRegressor.create_default_for_version(ModelVersion.V2)
-```
+## Acknowledgements
 
-## Enterprise & Production
-
-For high-throughput or massive-scale production environments, we offer an **Enterprise Edition** with the following capabilities:
--   **Fast Inference Mode**: A proprietary distillation engine that converts TabPFN-2.6 into a compact MLP or tree ensemble, delivering orders-of-magnitude lower latency for real-time applications.
--   **Large Data Mode (Scaling Mode)**: An advanced operating mode that lifts row constraints to support datasets with up to **10 million rows**—a 1,000x increase over the default TabPFN-2.5 and TabPFN-2.6 models.
--   **Commercial Support**: Includes a Commercial Enterprise License for production use-cases, dedicated integration support, and access to private high-speed inference engines.
-
-**To learn more or request a commercial license, please contact us at [sales@priorlabs.ai](mailto:sales@priorlabs.ai).**
-
-
-## Join Our Community
-
-We're building the future of tabular machine learning and would love your involvement:
-
-1. **Connect & Learn**:
-   - Join our [Discord Community](https://discord.gg/VJRuU3bSxt)
-   - Read our [Documentation](https://priorlabs.ai/docs)
-   - Check out [GitHub Issues](https://github.com/priorlabs/tabpfn/issues)
-
-2. **Contribute**:
-   - Report bugs or request features
-   - Submit pull requests (please make sure to open an issue discussing the feature/bug first if none exists)
-   - Share your research and use cases
-
-3. **Stay Updated**: Star the repo and join Discord for the latest updates
-
-## Citation
-
-You can read our paper explaining TabPFNv2 [here](https://doi.org/10.1038/s41586-024-08328-6), and the model report of TabPFN-2.5 [here](https://arxiv.org/abs/2511.08667).
+Built on [TabPFN](https://github.com/PriorLabs/TabPFN) by Prior Labs — this repo is a fork; all
+credit for the base model belongs to the original authors:
 
 ```bibtex
-@misc{grinsztajn2025tabpfn,
-  title={TabPFN-2.5: Advancing the State of the Art in Tabular Foundation Models},
-  author={Léo Grinsztajn and Klemens Flöge and Oscar Key and Felix Birkel and Philipp Jund and Brendan Roof and
-          Benjamin Jäger and Dominik Safaric and Simone Alessi and Adrian Hayler and Mihir Manium and Rosen Yu and
-          Felix Jablonski and Shi Bin Hoo and Anurag Garg and Jake Robertson and Magnus Bühler and Vladyslav Moroshan and
-          Lennart Purucker and Clara Cornu and Lilly Charlotte Wehrhahn and Alessandro Bonetto and
-          Bernhard Schölkopf and Sauraj Gambhir and Noah Hollmann and Frank Hutter},
-  year={2025},
-  eprint={2511.08667},
-  archivePrefix={arXiv},
-  url={https://arxiv.org/abs/2511.08667},
-}
-
 @article{hollmann2025tabpfn,
  title={Accurate predictions on small data with a tabular foundation model},
  author={Hollmann, Noah and M{\"u}ller, Samuel and Purucker, Lennart and
@@ -312,207 +248,10 @@ You can read our paper explaining TabPFNv2 [here](https://doi.org/10.1038/s41586
          Schirrmeister, Robin Tibor and Hutter, Frank},
  journal={Nature},
  year={2025},
- month={01},
- day={09},
  doi={10.1038/s41586-024-08328-6},
- publisher={Springer Nature},
- url={https://www.nature.com/articles/s41586-024-08328-6},
-}
-
-@inproceedings{hollmann2023tabpfn,
-  title={TabPFN: A transformer that solves small tabular classification problems in a second},
-  author={Hollmann, Noah and M{\"u}ller, Samuel and Eggensperger, Katharina and Hutter, Frank},
-  booktitle={International Conference on Learning Representations 2023},
-  year={2023}
 }
 ```
 
-
-
-## ❓ FAQ
-
-### **Usage & Compatibility**
-
-**Q: What dataset sizes work best with TabPFN?**
-A: TabPFN-2.5 is optimized for **datasets up to 50,000 rows**. For larger datasets, consider using **Random Forest preprocessing** or other extensions. See our [Colab notebook](https://colab.research.google.com/drive/154SoIzNW1LHBWyrxNwmBqtFAr1uZRZ6a#scrollTo=OwaXfEIWlhC8) for strategies.
-
-**Q: Why can't I use TabPFN with Python 3.8?**
-A: TabPFN requires **Python 3.9+** due to newer language features. Compatible versions: **3.9, 3.10, 3.11, 3.12, 3.13**.
-
-### **Installation & Setup**
-
-**Q: How do I get access to TabPFN-2.5 / TabPFN-2.6?**
-
-On first use, TabPFN will automatically open a browser window where you can log in via [PriorLabs](https://ux.priorlabs.ai) and accept the license terms. Your authentication token is cached locally so you only need to do this once.
-
-**For headless / CI environments** where a browser is not available, visit [https://ux.priorlabs.ai](https://ux.priorlabs.ai), go to the **License** tab to accept the license, and then set the `TABPFN_TOKEN` environment variable with a token obtained from your account.
-
-If access via the browser-based flow is not an option for you, please contact us at [`sales@priorlabs.ai`](mailto:sales@priorlabs.ai).
-
-**Q: How do I use TabPFN without an internet connection?**
-
-TabPFN automatically downloads model weights when first used. For offline usage:
-
-**Using the Provided Download Script**
-
-If you have the TabPFN repository, you can use the included script to download all models (including ensemble variants):
-
-```bash
-# After installing TabPFN
-python scripts/download_all_models.py
-```
-
-This script will download the main classifier and regressor models, as well as all ensemble variant models to your system's default cache directory.
-
-**Manual Download**
-
-1. Download the model files manually from HuggingFace:
-   - Classifier: [tabpfn-v2.5-classifier-v2.5_default.ckpt](https://huggingface.co/Prior-Labs/tabpfn_2_5/blob/main/tabpfn-v2.5-classifier-v2.5_default.ckpt) (Note: the classifier default uses the model fine-tuned on real data).
-   - Regressor: [tabpfn-v2.5-regressor-v2.5_default.ckpt](https://huggingface.co/Prior-Labs/tabpfn_2_5/blob/main/tabpfn-v2.5-regressor-v2.5_default.ckpt)
-
-2. Place the file in one of these locations:
-   - Specify directly: `TabPFNClassifier(model_path="/path/to/model.ckpt")`
-   - Set environment variable: `export TABPFN_MODEL_CACHE_DIR="/path/to/dir"` (see environment variables FAQ below)
-   - Default OS cache directory:
-     - Windows: `%APPDATA%\tabpfn\`
-     - macOS: `~/Library/Caches/tabpfn/`
-     - Linux: `~/.cache/tabpfn/`
-
-**Q: I'm getting a `pickle` error when loading the model. What should I do?**
-A: Try the following:
-- Download the newest version of tabpfn `pip install tabpfn --upgrade`
-- Ensure model files downloaded correctly (re-download if needed)
-
-**Q: What environment variables can I use to configure TabPFN?**
-A: TabPFN uses Pydantic settings for configuration, supporting environment variables and `.env` files:
-
-**Authentication:**
-- `TABPFN_TOKEN`: Provide a PriorLabs authentication token directly (useful for headless/CI environments). Obtain one from [https://ux.priorlabs.ai](https://ux.priorlabs.ai).
-- `TABPFN_NO_BROWSER`: Set to disable automatic browser-based login (e.g. in environments where opening a browser is undesirable).
-
-**Model Configuration:**
-- `TABPFN_MODEL_CACHE_DIR`: Custom directory for caching downloaded TabPFN models (default: platform-specific user cache directory)
-- `TABPFN_ALLOW_CPU_LARGE_DATASET`: Allow running TabPFN on CPU with large datasets (>1000 samples). Set to `true` to override the CPU limitation. Note: This will be very slow!
-
-**PyTorch Settings:**
-- `PYTORCH_CUDA_ALLOC_CONF`: PyTorch CUDA memory allocation configuration to optimize GPU memory usage (default: `max_split_size_mb:512`). See [PyTorch CUDA documentation](https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf) for more information.
-
-Example:
-```bash
-export TABPFN_MODEL_CACHE_DIR="/path/to/models"
-export TABPFN_ALLOW_CPU_LARGE_DATASET=true
-export PYTORCH_CUDA_ALLOC_CONF="max_split_size_mb:512"
-```
-
-Or simply set them in your `.env`
-
-**Q: How do I save and load a trained TabPFN model?**
-A: Use :func:`save_fitted_tabpfn_model` to persist a fitted estimator and reload
-it later with :func:`load_fitted_tabpfn_model` (or the corresponding
-``load_from_fit_state`` class methods).
-
-```python
-from tabpfn import TabPFNRegressor
-from tabpfn.model_loading import (
-    load_fitted_tabpfn_model,
-    save_fitted_tabpfn_model,
-)
-
-# Train the regressor on GPU
-reg = TabPFNRegressor(device="cuda")
-reg.fit(X_train, y_train)
-save_fitted_tabpfn_model(reg, "my_reg.tabpfn_fit")
-
-# Later or on a CPU-only machine
-reg_cpu = load_fitted_tabpfn_model("my_reg.tabpfn_fit", device="cpu")
-```
-
-To store just the foundation model weights (without a fitted estimator) use
-``save_tabpfn_model(reg.model_, "my_tabpfn.ckpt")``. This merely saves a
-checkpoint of the pre-trained weights so you can later create and fit a fresh
-estimator. Reload the checkpoint with ``load_model_criterion_config``.
-
-### **Performance & Limitations**
-
-**Q: Can TabPFN handle missing values?**
-A: **Yes!**
-
-**Q: How can I improve TabPFN’s performance?**
-A: Best practices:
-- Use **AutoTabPFNClassifier** from [TabPFN Extensions](https://github.com/priorlabs/tabpfn-extensions) for post-hoc ensembling
-- Feature engineering: Add domain-specific features to improve model performance
-
-Not effective:
-- Adapt feature scaling
-- Convert categorical features to numerical values (e.g., one-hot encoding)
-
-**Q: What are the different checkpoints on [Hugging-Face](https://huggingface.co/Prior-Labs/tabpfn_2_5/tree/main)?**
-A: Beyond the default checkpoints, the other available checkpoints are experimental and worse on average, and we recommend to always start with the defaults. They can be used as part of an ensembling or hyperparameter optimization system (and are used automatically in `AutoTabPFNClassifier`) or tried out manually. Their name suffixes refer to what we expect them to be good at.
-
-<details>
-<summary>More detail on each TabPFN-2.5 checkpoint</summary>
-
-We add the 🌍 emoji for checkpoints finetuned on real datasets. See the [TabPFN-2.5 paper](https://arxiv.org/abs/2511.08667) for the list of 43 datasets.
-
-- `tabpfn-v2.5-classifier-v2.5_default.ckpt` 🌍: default classification checkpoint, finetuned on real-data.
-- `tabpfn-v2.5-classifier-v2.5_default-2.ckpt`: best classification synthetic checkpoint. Use this to get the default TabPFN-2.5 classification model without real-data finetuning.
-- `tabpfn-v2.5-classifier-v2.5_large-features-L.ckpt`: specialized for larger features (up to 500) and small samples (< 5K).
-- `tabpfn-v2.5-classifier-v2.5_large-features-XL.ckpt`: specialized for larger features (up to  1000, could support `max_features_per_estimator=1000`).
-- `tabpfn-v2.5-classifier-v2.5_large-samples.ckpt`: specialized for larger sample sizes (larger than 30K)
-- `tabpfn-v2.5-classifier-v2.5_real.ckpt` 🌍: other real-data finetuned classification checkpoint. Pretty good overall but bad on large features (>100-200).
-- `tabpfn-v2.5-classifier-v2.5_real-large-features.ckpt` 🌍: other real-data finetuned classification checkpoint, worse on large samples (> 10K)
-- `tabpfn-v2.5-classifier-v2.5_real-large-samples-and-features.ckpt` 🌍: identical to `tabpfn-v2.5-classifier-v2.5_default.ckpt`
-- `tabpfn-v2.5-classifier-v2.5_variant.ckpt`: pretty good but bad on large features (> 100-200).
-- `tabpfn-v2.5-regressor-v2.5_default.ckpt`: default regression checkpoint, trained on synthetic data only.
-- `tabpfn-v2.5-regressor-v2.5_low-skew.ckpt`: variant specialized at low target skew data (but quite bad on average).
-- `tabpfn-v2.5-regressor-v2.5_quantiles.ckpt`: variant which might be interesting for quantile / distribution estimation, though the default should still be prioritized for this.
-- `tabpfn-v2.5-regressor-v2.5_real.ckpt` 🌍: finetuned on real-data. Best checkpoint among the checkpoints finetuned on real data. For regression we recommend the synthetic-only checkpoint as a default, but this checkpoint is quite a bit better on some datasets.
-- `tabpfn-v2.5-regressor-v2.5_real-variant.ckpt` 🌍: other regression variant finetuned on real data.
-- `tabpfn-v2.5-regressor-v2.5_small-samples.ckpt`: variant slightly better on small (< 3K) samples.
-- `tabpfn-v2.5-regressor-v2.5_variant.ckpt`: other variant, no clear specialty but can be better on a few datasets.
-
-</details>
-
-
-## Development
-
-1. Install [uv](https://docs.astral.sh/uv/)
-2. Setup environment:
-```bash
-git clone https://github.com/PriorLabs/TabPFN.git
-cd TabPFN
-uv sync
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pre-commit install
-```
-
-3. Before committing:
-```bash
-pre-commit run --all-files
-```
-
-4. Run tests:
-```bash
-pytest tests/
-```
-
-## Anonymized Telemetry
-
-This project collects fully anonymous usage telemetry with an option to opt-out of any telemetry or opt-in to extended telemetry.
-
-The data is used exclusively to help us provide stability to the relevant products and compute environments and guide future improvements.
-
-- **No personal data is collected**
-- **No code, model inputs, or outputs are ever sent**
-- **Data is strictly anonymous and cannot be linked to individuals**
-
-For details on telemetry, please see our [Telemetry Reference](https://github.com/PriorLabs/TabPFN/blob/main/TELEMETRY.md) and our [Privacy Policy](https://priorlabs.ai/privacy-policy/).
-
-**To opt out**, set the following environment variable:
-
-```bash
-export TABPFN_DISABLE_TELEMETRY=1
-```
----
-
-Built with ❤️ by [Prior Labs](https://priorlabs.ai) - Copyright (c) 2025 Prior Labs GmbH
+The TabPFN code is licensed under the Prior Labs License (see `LICENSE`); the TabPFN-2.5/2.6
+model weights are under a separate
+[non-commercial license](https://huggingface.co/Prior-Labs/tabpfn_2_6/blob/main/LICENSE).
