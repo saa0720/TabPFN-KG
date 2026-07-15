@@ -1,0 +1,95 @@
+[n=30 mixed kg_frac=0.7 s=0 gates=two] base=51.2 van=51.0 ours0=51.8 ours=54.6 base_fpg1=50.2 van_fpg1=49.6 ours_fpg1=53.8 
+  Times cpu/wall (s): train=5574.3/955.0, base=296.0/52.4, vanilla=231.4/39.4, ours0=28.7/3.7, ours=30.1/3.9, oracle=5.8/0.8
+[n=30 mixed kg_frac=0.7 s=1 gates=two] base=51.4 van=53.0 ours0=50.6 ours=54.8 base_fpg1=50.8 van_fpg1=50.0 ours_fpg1=54.8 
+  Times cpu/wall (s): train=156.4/20.4, base=28.9/3.9, vanilla=27.0/3.5, ours0=28.6/3.7, ours=29.7/3.8, oracle=5.8/0.7
+[n=30 mixed kg_frac=0.7 s=2 gates=two] base=48.6 van=48.2 ours0=47.4 ours=47.6 base_fpg1=46.4 van_fpg1=47.8 ours_fpg1=46.0 
+  Times cpu/wall (s): train=188.3/24.6, base=28.5/3.8, vanilla=26.1/3.4, ours0=28.7/3.7, ours=29.2/3.8, oracle=5.8/0.8
+[n=30 mixed kg_frac=0.7 s=3 gates=two] base=50.8 van=47.8 ours0=49.6 ours=50.4 base_fpg1=51.4 van_fpg1=47.0 ours_fpg1=49.0 
+  Times cpu/wall (s): train=114.0/14.9, base=28.4/3.7, vanilla=27.0/3.6, ours0=28.6/3.7, ours=30.0/3.9, oracle=5.9/0.8
+[n=30 mixed kg_frac=0.7 s=4 gates=two] base=45.8 van=49.6 ours0=47.4 ours=59.4 base_fpg1=50.8 van_fpg1=51.4 ours_fpg1=62.8 
+  Times cpu/wall (s): train=175.4/22.9, base=28.4/3.7, vanilla=26.4/3.5, ours0=28.4/3.7, ours=29.7/3.8, oracle=5.8/0.8
+[n=30 mixed kg_frac=0.7 s=5 gates=two] base=48.2 van=46.8 ours0=48.6 ours=53.2 base_fpg1=47.6 van_fpg1=45.4 ours_fpg1=50.8 
+  Times cpu/wall (s): train=155.7/20.3, base=28.4/3.8, vanilla=26.3/3.4, ours0=28.5/3.7, ours=29.6/3.8, oracle=5.7/0.7
+[n=30 mixed kg_frac=0.7 s=6 gates=two] base=48.6 van=48.2 ours0=50.6 ours=54.2 base_fpg1=49.6 van_fpg1=47.6 ours_fpg1=52.4 
+  Times cpu/wall (s): train=123.1/16.1, base=28.3/3.8, vanilla=26.7/3.4, ours0=28.9/3.7, ours=29.9/3.8, oracle=5.8/0.8
+[n=30 mixed kg_frac=0.7 s=7 gates=two] base=51.4 van=50.2 ours0=50.8 ours=50.8 base_fpg1=49.0 van_fpg1=50.6 ours_fpg1=48.6 
+  Times cpu/wall (s): train=90.8/11.9, base=28.5/3.7, vanilla=26.1/3.4, ours0=28.9/3.8, ours=29.3/3.8, oracle=5.8/0.7
+[n=30 mixed kg_frac=0.7 s=8 gates=two] base=54.4 van=53.2 ours0=54.2 ours=56.2 base_fpg1=52.6 van_fpg1=53.0 ours_fpg1=57.2 
+  Times cpu/wall (s): train=91.0/11.9, base=28.4/3.7, vanilla=26.1/3.4, ours0=28.7/3.7, ours=29.4/3.9, oracle=5.7/0.7
+[n=30 mixed kg_frac=0.7 s=9 gates=two] base=56.0 van=58.0 ours0=56.8 ours=62.4 base_fpg1=58.4 van_fpg1=57.6 ours_fpg1=59.6 
+  Times cpu/wall (s): train=910.8/147.8, base=28.8/3.7, vanilla=26.5/3.4, ours0=28.5/3.7, ours=29.4/3.8, oracle=6.1/0.9
+[n=60 mixed kg_frac=0.7 s=0 gates=two] base=57.4 van=55.0 ours0=58.6 ours=59.0 base_fpg1=59.6 van_fpg1=53.2 ours_fpg1=69.6 
+  Times cpu/wall (s): train=220.2/28.6, base=30.5/3.9, vanilla=28.5/3.7, ours0=30.2/3.9, ours=34.1/4.6, oracle=6.0/0.8
+[n=60 mixed kg_frac=0.7 s=1 gates=two] base=55.0 van=51.0 ours0=56.0 ours=63.2 base_fpg1=53.2 van_fpg1=53.4 ours_fpg1=68.2 
+  Times cpu/wall (s): train=134.6/17.6, base=29.3/3.8, vanilla=28.1/3.6, ours0=29.4/3.8, ours=30.6/4.1, oracle=6.0/0.8
+[n=60 mixed kg_frac=0.7 s=2 gates=two] base=49.6 van=49.6 ours0=49.6 ours=50.8 base_fpg1=47.6 van_fpg1=48.2 ours_fpg1=61.8 
+  Times cpu/wall (s): train=125.4/16.3, base=29.9/3.9, vanilla=28.4/3.7, ours0=30.2/4.1, ours=31.2/4.0, oracle=6.0/0.8
+[n=60 mixed kg_frac=0.7 s=3 gates=two] base=58.8 van=58.4 ours0=59.6 ours=60.2 base_fpg1=58.6 van_fpg1=57.8 ours_fpg1=68.0 
+  Times cpu/wall (s): train=232.6/30.1, base=29.6/3.8, vanilla=27.8/3.6, ours0=29.8/4.0, ours=30.5/3.9, oracle=6.1/0.8
+[n=60 mixed kg_frac=0.7 s=4 gates=two] base=53.4 van=52.4 ours0=54.4 ours=59.6 base_fpg1=54.0 van_fpg1=55.6 ours_fpg1=56.6 
+  Times cpu/wall (s): train=155.4/20.1, base=29.9/3.9, vanilla=28.4/3.6, ours0=30.0/3.9, ours=31.0/4.1, oracle=6.1/0.8
+[n=60 mixed kg_frac=0.7 s=5 gates=two] base=62.2 van=59.0 ours0=62.0 ours=68.0 base_fpg1=57.6 van_fpg1=57.6 ours_fpg1=61.6 
+  Times cpu/wall (s): train=184.6/23.9, base=29.8/3.9, vanilla=28.2/3.6, ours0=29.9/3.9, ours=30.9/4.1, oracle=6.0/0.8
+[n=60 mixed kg_frac=0.7 s=6 gates=two] base=62.0 van=55.2 ours0=62.2 ours=58.4 base_fpg1=59.8 van_fpg1=62.0 ours_fpg1=58.2 
+  Times cpu/wall (s): train=229.0/29.8, base=30.3/3.9, vanilla=28.2/3.6, ours0=30.7/3.9, ours=47.0/6.6, oracle=6.1/0.8
+[n=60 mixed kg_frac=0.7 s=7 gates=two] base=51.8 van=57.0 ours0=51.0 ours=59.2 base_fpg1=51.8 van_fpg1=52.4 ours_fpg1=59.8 
+  Times cpu/wall (s): train=296.9/41.2, base=33.1/4.3, vanilla=31.2/4.0, ours0=33.1/4.4, ours=33.8/4.3, oracle=6.4/0.8
+[n=60 mixed kg_frac=0.7 s=8 gates=two] base=51.0 van=48.2 ours0=51.6 ours=53.6 base_fpg1=49.4 van_fpg1=46.6 ours_fpg1=63.0 
+  Times cpu/wall (s): train=5583.9/2560.5, base=33.6/4.3, vanilla=31.5/4.1, ours0=32.6/4.4, ours=32.5/4.2, oracle=6.3/0.8
+[n=60 mixed kg_frac=0.7 s=9 gates=two] base=63.6 van=60.8 ours0=64.2 ours=63.0 base_fpg1=63.6 van_fpg1=62.4 ours_fpg1=65.8 
+  Times cpu/wall (s): train=149.1/19.4, base=32.4/4.2, vanilla=30.5/3.9, ours0=32.3/4.2, ours=88.0/14.8, oracle=6.5/0.8
+[n=120 mixed kg_frac=0.7 s=0 gates=two] base=56.6 van=61.2 ours0=66.4 ours=70.0 base_fpg1=58.8 van_fpg1=57.6 ours_fpg1=69.2 
+  Times cpu/wall (s): train=353.6/49.1, base=34.8/4.5, vanilla=34.5/4.4, ours0=35.0/4.5, ours=36.1/4.6, oracle=6.9/0.9
+[n=120 mixed kg_frac=0.7 s=1 gates=two] base=59.8 van=61.0 ours0=62.4 ours=63.0 base_fpg1=60.0 van_fpg1=63.2 ours_fpg1=61.6 
+  Times cpu/wall (s): train=269.0/34.8, base=35.4/4.6, vanilla=34.6/4.5, ours0=94.3/14.6, ours=173.0/27.2, oracle=7.1/0.9
+[n=120 mixed kg_frac=0.7 s=2 gates=two] base=65.4 van=64.2 ours0=65.6 ours=66.4 base_fpg1=65.0 van_fpg1=60.2 ours_fpg1=68.0 
+  Times cpu/wall (s): train=299.0/38.5, base=102.3/15.1, vanilla=34.6/4.4, ours0=35.2/4.5, ours=36.9/4.9, oracle=7.2/0.9
+[n=120 mixed kg_frac=0.7 s=3 gates=two] base=53.4 van=54.2 ours0=55.8 ours=67.2 base_fpg1=51.6 van_fpg1=50.4 ours_fpg1=67.4 
+  Times cpu/wall (s): train=270.8/35.0, base=34.7/4.5, vanilla=34.3/4.4, ours0=34.6/4.4, ours=35.5/4.7, oracle=6.9/0.9
+[n=120 mixed kg_frac=0.7 s=4 gates=two] base=63.4 van=60.6 ours0=65.2 ours=64.4 base_fpg1=63.6 van_fpg1=62.2 ours_fpg1=67.0 
+  Times cpu/wall (s): train=209.0/27.0, base=34.5/4.4, vanilla=34.1/4.4, ours0=34.6/4.4, ours=35.5/4.7, oracle=6.8/0.9
+[n=120 mixed kg_frac=0.7 s=5 gates=two] base=55.2 van=53.0 ours0=55.6 ours=62.2 base_fpg1=54.0 van_fpg1=54.6 ours_fpg1=75.4 
+  Times cpu/wall (s): train=288.2/37.0, base=34.4/4.4, vanilla=34.0/4.4, ours0=34.6/4.6, ours=35.2/4.5, oracle=6.8/0.9
+[n=120 mixed kg_frac=0.7 s=6 gates=two] base=59.6 van=53.8 ours0=55.6 ours=57.6 base_fpg1=55.0 van_fpg1=53.0 ours_fpg1=62.6 
+  Times cpu/wall (s): train=353.1/45.6, base=37.7/4.9, vanilla=36.9/4.7, ours0=37.9/5.0, ours=39.2/5.0, oracle=7.6/1.0
+[n=120 mixed kg_frac=0.7 s=7 gates=two] base=59.0 van=59.4 ours0=61.4 ours=67.4 base_fpg1=61.4 van_fpg1=59.6 ours_fpg1=75.4 
+  Times cpu/wall (s): train=462.9/59.4, base=37.9/5.0, vanilla=37.5/4.8, ours0=38.0/4.9, ours=39.8/5.1, oracle=7.5/1.0
+[n=120 mixed kg_frac=0.7 s=8 gates=two] base=56.8 van=58.6 ours0=56.6 ours=62.8 base_fpg1=55.6 van_fpg1=55.8 ours_fpg1=64.4 
+  Times cpu/wall (s): train=520.7/69.8, base=39.7/5.3, vanilla=39.6/5.1, ours0=38.8/5.0, ours=98.8/14.4, oracle=7.7/1.0
+[n=120 mixed kg_frac=0.7 s=9 gates=two] base=57.2 van=58.4 ours0=60.8 ours=58.4 base_fpg1=58.8 van_fpg1=58.0 ours_fpg1=73.0 
+  Times cpu/wall (s): train=5261.8/890.0, base=39.2/5.2, vanilla=38.3/4.9, ours0=39.0/5.0, ours=287.9/48.3, oracle=245.3/40.6
+[n=240 mixed kg_frac=0.7 s=0 gates=two] base=65.8 van=64.2 ours0=70.2 ours=71.2 base_fpg1=66.4 van_fpg1=63.4 ours_fpg1=71.2 
+  Times cpu/wall (s): train=1262.5/196.7, base=263.8/46.6, vanilla=197.9/34.1, ours0=332.6/57.1, ours=290.5/49.5, oracle=9.0/1.2
+[n=240 mixed kg_frac=0.7 s=1 gates=two] base=62.4 van=64.0 ours0=63.8 ours=63.4 base_fpg1=57.0 van_fpg1=62.2 ours_fpg1=69.2 
+  Times cpu/wall (s): train=887.0/128.9, base=100.3/15.1, vanilla=208.6/35.9, ours0=45.9/5.9, ours=59.3/8.2, oracle=8.7/1.1
+[n=240 mixed kg_frac=0.7 s=2 gates=two] base=64.2 van=60.6 ours0=69.4 ours=71.4 base_fpg1=61.4 van_fpg1=59.8 ours_fpg1=76.0 
+  Times cpu/wall (s): train=340.9/43.5, base=42.5/5.6, vanilla=44.6/5.7, ours0=42.3/5.4, ours=43.7/5.6, oracle=8.2/1.1
+[n=240 mixed kg_frac=0.7 s=3 gates=two] base=58.8 van=62.0 ours0=64.4 ours=67.0 base_fpg1=57.4 van_fpg1=60.6 ours_fpg1=72.8 
+  Times cpu/wall (s): train=1084.4/161.5, base=199.7/33.0, vanilla=48.0/6.2, ours0=57.4/7.8, ours=319.3/56.1, oracle=111.8/18.2
+[n=240 mixed kg_frac=0.7 s=4 gates=two] base=56.6 van=55.4 ours0=75.4 ours=68.4 base_fpg1=57.4 van_fpg1=57.0 ours_fpg1=76.6 
+  Times cpu/wall (s): train=311.2/41.0, base=42.9/5.5, vanilla=45.7/5.9, ours0=43.0/5.5, ours=44.6/5.7, oracle=8.5/1.1
+[n=240 mixed kg_frac=0.7 s=5 gates=two] base=60.8 van=61.6 ours0=70.4 ours=70.6 base_fpg1=61.0 van_fpg1=53.6 ours_fpg1=72.8 
+  Times cpu/wall (s): train=778.6/104.9, base=42.9/5.5, vanilla=45.4/5.8, ours0=42.8/5.5, ours=44.6/5.8, oracle=8.3/1.1
+[n=240 mixed kg_frac=0.7 s=6 gates=two] base=68.8 van=70.0 ours0=74.4 ours=73.0 base_fpg1=69.4 van_fpg1=69.4 ours_fpg1=85.0 
+  Times cpu/wall (s): train=646.1/86.0, base=44.2/5.7, vanilla=71.0/10.0, ours0=169.8/32.8, ours=45.7/5.9, oracle=8.7/1.1
+[n=240 mixed kg_frac=0.7 s=7 gates=two] base=66.0 van=56.0 ours0=81.4 ours=81.4 base_fpg1=58.0 van_fpg1=56.0 ours_fpg1=74.0 
+  Times cpu/wall (s): train=521.8/66.8, base=41.5/5.3, vanilla=44.2/5.7, ours0=41.4/5.3, ours=42.4/5.4, oracle=8.2/1.1
+[n=240 mixed kg_frac=0.7 s=8 gates=two] base=60.4 van=61.4 ours0=74.0 ours=75.6 base_fpg1=60.0 van_fpg1=60.6 ours_fpg1=77.0 
+  Times cpu/wall (s): train=466.7/59.6, base=41.6/5.3, vanilla=43.8/5.6, ours0=41.3/5.3, ours=42.6/5.4, oracle=8.2/1.1
+[n=240 mixed kg_frac=0.7 s=9 gates=two] base=63.0 van=62.2 ours0=74.0 ours=68.8 base_fpg1=63.0 van_fpg1=62.2 ours_fpg1=77.4 
+  Times cpu/wall (s): train=634.9/81.1, base=42.0/5.4, vanilla=44.5/5.7, ours0=42.4/5.4, ours=55.1/7.2, oracle=8.4/1.1
+
+=== mean test acc (%) ===
+                 base  vanilla  ours0  ours  base_fpg1  vanilla_fpg1  ours_fpg1  oracle  headroom  gain  captured%  tok_cost  gain_fpg1
+kg_frac n_train                                                                                                                        
+0.7     30       50.6     50.6   50.8  54.4       50.7          50.0       53.5    55.2       4.6   3.8       83.0       0.1        2.8
+        60       56.5     54.7   56.9  59.5       55.5          54.9       63.3    59.6       3.1   3.0       97.0      -1.0        7.8
+        120      58.6     58.4   60.5  63.9       58.4          57.5       68.4    65.2       6.6   5.3       80.0      -0.2       10.0
+        240      62.7     61.7   71.7  71.1       61.1          60.5       75.2    71.9       9.2   8.4       91.0      -1.6       14.1
+
+(read: gain = ours - base = total KG gain; headroom = oracle - base = what a perfect KG could buy; captured% = gain/headroom; ours0 - base = perm-sampler share; vanilla differs from base only by preprocessing, not KG; tok_cost = base_fpg1 - base = price of 1-column tokens; gain_fpg1 = ours_fpg1 - base_fpg1 = exact-prior KG gain, no clustering)
+Records saved -> kgam_results/kgam_mixed_d100_f0.7_pmean_mixed_lamtwo_records.json
+Plot saved -> kgam_results/kgam_mixed_d100_f0.7_pmean_mixed_lamtwo_frac0.7_pmean_acc.png
+Layer-wise Lambda Plot saved -> kgam_results/kgam_mixed_d100_f0.7_pmean_mixed_lamtwo_frac0.7_pmean_lambdas.png
+Time Plot saved -> kgam_results/kgam_mixed_d100_f0.7_pmean_mixed_lamtwo_frac0.7_pmean_times.png
+Loss/gate-trajectory plot saved -> kgam_results/kgam_mixed_d100_f0.7_pmean_mixed_lamtwo_frac0.7_pmean_loss.png

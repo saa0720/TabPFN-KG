@@ -1,0 +1,84 @@
+#!/bin/bash
+# =============================================================================
+# PBS template for the KGAM (Method E) grids: one job = one cell, passed in via
+# environment variables. Normally you don't qsub this by hand — run
+#   bash kg_e_kgam_submit_all.sh
+# Two DGPs:
+#   label  cell = (NFEAT, NKNOWN):
+#          qsub -N kgam_d100_k6 -v "NFEAT=100,NKNOWN=6" kg_e_kgam_sweep.pbs
+#   mixed  cell = (NFEAT, KGFRAC, POOLFF):
+#          qsub -N kgmx_f07_max -v "DGP=mixed,NFEAT=100,KGFRAC=0.7,POOLFF=max" \
+#               kg_e_kgam_sweep.pbs
+#
+# In-job sweep: seeds 0-(NSEEDS-1), n_train 30/60/120/240, gate-mode two
+# (one is bit-identical to two on the label DGP), fpg1 arms ON unless FPG1=0.
+# Timing columns: time_* = CPU process time, time_*_wall = wall.
+#
+# Outputs land in kgam_results/ under the per-cell stem
+#   label: kgam_d<NFEAT>_k<NKNOWN>    mixed: kgam_mixed_d<NFEAT>_f<KGFRAC>
+#   <stem>_<dgp>_lamtwo_records.json                     raw per-seed records
+#   <stem>_<dgp>_lamtwo_*_{acc,lambdas,times,loss}.png
+#   <stem>.log                                           python stdout
+# =============================================================================
+
+#PBS -l select=1:ncpus=8:mem=32gb
+#PBS -l walltime=24:00:00
+#PBS -j oe
+
+set -euo pipefail
+
+# Submit from the TabPFN/code/TabPFN root folder!
+cd "$PBS_O_WORKDIR"
+
+# ---- environment (same as kg_e_kgam_run.pbs) ------------------------------
+module load python/3.10.8
+source venv/bin/activate
+
+export TABPFN_TOKEN="tabpfn_sk_UPwvEP4TwpM-91a2H_ImqvHzfn8scwNkp66AZrKEDhs"
+
+# keep BLAS from oversubscribing the allocated cores
+export OMP_NUM_THREADS=${PBS_NP:-8}
+export MKL_NUM_THREADS=${PBS_NP:-8}
+
+# ---- which grid cell this job runs (with lone-run fallbacks) ----------------
+NFEAT=${NFEAT:-100}     # 50 | 100 | 200   (k_rel fixed at 12: more distractors)
+NKNOWN=${NKNOWN:-6}     # label DGP: 6 = partial coverage (main) | 12 = full (ceiling)
+KGFRAC=${KGFRAC:-1.0}   # mixed DGP: observed fraction of each KG channel, ONE per job
+POOLFF=${POOLFF:-max}   # mixed DGP: ff-edge pooling, max | mean (pooling ablation)
+NSEEDS=${NSEEDS:-10}    # 500 test rows -> SE ~0.7pp at 10 seeds (script docstring)
+FPG1=${FPG1:-1}         # 0 = --no-fpg1 (the fpg=1 arms dominate cost at large d)
+DGP=${DGP:-label}
+GATE_MODE=${GATE_MODE:-two}
+OUTDIR=${OUTDIR:-kgam_results}
+mkdir -p "$OUTDIR"
+
+fpg_flag=""
+if [ "$FPG1" -eq 0 ]; then fpg_flag="--no-fpg1"; fi
+
+# DGP-specific knobs + output stem. mixed sweeps POOLFF as an ablation: tex §pooling
+# argues masked-MAX for edge-sparse ff relations (mean dilutes a single edge by up to
+# 1/p^2 when the community perm packs covered columns into one token); mean is the
+# smooth-average alternative. pool-ff is inert on label (no ff channel). One
+# (kg_frac, pool_ff) per job keeps every job at the 40-condition size that fit the
+# 24h walltime on the label grid, and makes output names collision-free.
+if [ "$DGP" = "mixed" ]; then
+  dgp_args=(--kg-frac "$KGFRAC" --pool-ff "$POOLFF")
+  STEM="kgam_mixed_d${NFEAT}_f${KGFRAC}_p${POOLFF}"
+else
+  dgp_args=(--n-known "$NKNOWN")
+  STEM="kgam_d${NFEAT}_k${NKNOWN}"
+fi
+
+echo "host=$(hostname) cwd=$(pwd) dgp=$DGP d=$NFEAT known=$NKNOWN frac=$KGFRAC pool=$POOLFF seeds=$NSEEDS fpg1=$FPG1 gate_mode=$GATE_MODE start=$(date)"
+
+python kg_e_kgam.py \
+    --dgp "$DGP" \
+    --gate-mode "$GATE_MODE" \
+    --n-features "$NFEAT" \
+    "${dgp_args[@]}" \
+    --seeds $(seq 0 $((NSEEDS - 1))) \
+    $fpg_flag \
+    --out "$OUTDIR/$STEM" \
+    2>&1 | tee "$OUTDIR/${STEM}.log"
+
+echo "done=$(date)"
